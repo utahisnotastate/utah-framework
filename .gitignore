@@ -1,0 +1,9 @@
+/target
+/node_modules
+/dist
+.utah-vite-port
+utah_data.db
+*.db-journal
+.DS_Store
+.env
+.env.*
