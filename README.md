@@ -1,5 +1,9 @@
 # Utah Framework
 
+what started this.....
+
+![Screenshot of the original Reddit post](./docs/what-started-this.png)
+
 **The post-Electron paradigm.**
 
 Utah is a hyper-optimized desktop application framework. You build the UI with web technologies (React, Vue, HTML/CSS) while a **Rust** core handles the OS window, threading, storage, and security. The UI is hosted in the **native OS webview** (WebView2 on Windows, WebKit on macOS/Linux), not a bundled Chromium copy.
