@@ -16,6 +16,9 @@ use std::io::{Read, Write};
 use rusqlite::Connection;
 use keyring::Entry;
 use self_update::Status;
+use arboard::Clipboard;
+use notify_rust::Notification;
+use rfd::FileDialog;
 
 #[derive(Deserialize, Debug)]
 struct IpcMessage {
@@ -393,6 +396,80 @@ fn main() -> wry::Result<()> {
                                 status: "SUCCESS".to_string(),
                                 payload: "NOT_FOUND".to_string(),
                             },
+                        },
+                        Err(e) => IpcResponse {
+                            channel: msg.channel.clone(),
+                            status: "ERROR".to_string(),
+                            payload: e.to_string(),
+                        },
+                    };
+                    let _ = tx_resp.send(res);
+                    let _ = wake_clone.send_event(());
+                },
+                "dialog:open" => {
+                    println!("[UTAH-WORKER] Spawning Native OS File Dialog.");
+                    let path = FileDialog::new().pick_file();
+                    let payload = match path {
+                        Some(p) => p.display().to_string(),
+                        None => "CANCELLED".to_string(),
+                    };
+                    let res = IpcResponse {
+                        channel: msg.channel.clone(),
+                        status: "SUCCESS".to_string(),
+                        payload,
+                    };
+                    let _ = tx_resp.send(res);
+                    let _ = wake_clone.send_event(());
+                },
+                "clipboard:write" => {
+                    let text = msg.data["text"].as_str().unwrap_or("");
+                    let res = match Clipboard::new() {
+                        Ok(mut clipboard) => match clipboard.set_text(text) {
+                            Ok(_) => IpcResponse {
+                                channel: msg.channel.clone(),
+                                status: "SUCCESS".to_string(),
+                                payload: "COPIED".to_string(),
+                            },
+                            Err(e) => IpcResponse {
+                                channel: msg.channel.clone(),
+                                status: "ERROR".to_string(),
+                                payload: e.to_string(),
+                            },
+                        },
+                        Err(e) => IpcResponse {
+                            channel: msg.channel.clone(),
+                            status: "ERROR".to_string(),
+                            payload: e.to_string(),
+                        },
+                    };
+                    let _ = tx_resp.send(res);
+                    let _ = wake_clone.send_event(());
+                },
+                "clipboard:read" => {
+                    let res = match Clipboard::new() {
+                        Ok(mut clipboard) => IpcResponse {
+                            channel: msg.channel.clone(),
+                            status: "SUCCESS".to_string(),
+                            payload: clipboard.get_text().unwrap_or_default(),
+                        },
+                        Err(e) => IpcResponse {
+                            channel: msg.channel.clone(),
+                            status: "ERROR".to_string(),
+                            payload: e.to_string(),
+                        },
+                    };
+                    let _ = tx_resp.send(res);
+                    let _ = wake_clone.send_event(());
+                },
+                "system:notify" => {
+                    let title = msg.data["title"].as_str().unwrap_or("Utah Alert");
+                    let body = msg.data["body"].as_str().unwrap_or("");
+                    let notify_res = Notification::new().summary(title).body(body).show();
+                    let res = match notify_res {
+                        Ok(_) => IpcResponse {
+                            channel: msg.channel.clone(),
+                            status: "SUCCESS".to_string(),
+                            payload: "DISPATCHED".to_string(),
                         },
                         Err(e) => IpcResponse {
                             channel: msg.channel.clone(),

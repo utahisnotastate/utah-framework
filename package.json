@@ -1,18 +1,44 @@
 {
   "name": "utah-framework",
   "version": "1.0.0",
-  "description": "Next-generation lightweight desktop application framework",
+  "description": "The Post-Electron Paradigm. Sub-5MB native desktop apps.",
   "main": "index.js",
+  "bin": {
+    "utah-framework": "bin/utah.js",
+    "utah": "bin/utah.js"
+  },
+  "files": [
+    "bin",
+    "index.js",
+    "assimilate.js",
+    "public/utah_bridge.js",
+    "scripts/wait-for-vite.mjs",
+    "src/main.rs",
+    "Cargo.toml",
+    "LICENSE"
+  ],
   "scripts": {
     "dev:ui": "npx vite",
     "dev:core": "cargo run",
     "dev": "concurrently -n ui,core -c cyan,magenta \"npm run dev:ui\" \"node scripts/wait-for-vite.mjs && npm run dev:core\"",
-    "build": "npx vite build && cargo build --release"
+    "build": "npx vite build && cargo build --release",
+    "prepublishOnly": "node -e \"require('fs').accessSync('bin/utah.js'); require('fs').accessSync('assimilate.js');\""
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "desktop",
+    "electron-alternative",
+    "rust",
+    "webview",
+    "tauri-alternative",
+    "react",
+    "vite"
+  ],
+  "author": "Utah-1",
+  "license": "MIT",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.2",

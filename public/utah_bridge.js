@@ -9,6 +9,21 @@ window.Utah = {
         const message = JSON.stringify({ channel: channel, data: payload });
         window.ipc.postMessage(message);
     },
+    invokeAsync: function(channel, payload = {}) {
+        return new Promise(function(resolve, reject) {
+            function handler(e) {
+                window.removeEventListener(channel, handler);
+                var d = e.detail || {};
+                if (d.status === 'ERROR') {
+                    reject(new Error(d.payload || 'Utah IPC error'));
+                } else {
+                    resolve(d.payload);
+                }
+            }
+            window.addEventListener(channel, handler);
+            window.Utah.invoke(channel, payload);
+        });
+    },
     receiveResponse: function(channel, status, payload) {
         const event = new CustomEvent(channel, { detail: { status, payload } });
         window.dispatchEvent(event);
@@ -26,8 +41,17 @@ window.Utah = {
         getSecure: (key) => window.Utah.invoke('store:get_secure', { key })
     },
     system: {
-        checkForUpdates: () => window.Utah.invoke('system:update', {})
-    }
+        checkForUpdates: () => window.Utah.invoke('system:update', {}),
+        notify: (title, body) =>
+            window.Utah.invoke('system:notify', { title: title || 'Utah Alert', body: body || '' }),
+    },
+    dialog: {
+        openFile: () => window.Utah.invokeAsync('dialog:open', {}),
+    },
+    clipboard: {
+        writeText: (text) => window.Utah.invokeAsync('clipboard:write', { text: text || '' }),
+        readText: () => window.Utah.invokeAsync('clipboard:read', {}),
+    },
 };
 
 // AUTO-BIND OS DRAG REGIONS (do not steal clicks from title-bar control buttons)
@@ -42,12 +66,21 @@ window.addEventListener('mousedown', (e) => {
 // Legacy Electron code will access this without realizing Node is gone.
 window.require = function(module) {
     if (module === 'electron') {
+        console.warn('[UTAH] Legacy Electron call intercepted. Routing to Rust core.');
         return {
             ipcRenderer: {
-                send: (channel, data) => window.Utah.invoke(channel, data),
-                on: (channel, func) => window.addEventListener(channel, (e) => func(e, e.detail))
-            }
+                send: (channel, data) => window.Utah.invoke(channel, data || {}),
+                invoke: (channel, data) => window.Utah.invokeAsync(channel, data || {}),
+                on: (channel, func) =>
+                    window.addEventListener(channel, function (e) {
+                        func(e, e.detail);
+                    }),
+            },
+            clipboard: {
+                writeText: (text) => window.Utah.clipboard.writeText(text),
+                readText: () => window.Utah.clipboard.readText(),
+            },
         };
     }
-    throw new Error(`[UTAH] Module ${module} is blocked.`);
+    throw new Error('[UTAH] Module ' + module + ' is physically impossible in this timeline.');
 };

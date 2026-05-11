@@ -33,6 +33,7 @@ Exact numbers depend on your UI, dependencies, and target OS.
 ## Core capabilities (Utopia matrix)
 
 - **Synapse Bridge:** JSON IPC from the webview to a **background worker thread** so heavy work does not block the UI thread. Replies are delivered back into the page via `evaluate_script` + DOM events.
+- **Native dialogs & clipboard & notifications:** The Aegis worker handles `dialog:open`, `clipboard:read` / `clipboard:write`, and `system:notify` via `rfd`, `arboard`, and `notify-rust`. The bridge exposes `window.Utah.dialog.openFile()`, `window.Utah.clipboard.*`, and `window.Utah.system.notify(title, body)`.
 - **Quantum SQLite:** `db:execute` runs SQL against an on-disk `utah_data.db` (schema is yours to define beyond the starter `users` table).
 - **Aegis secure vault:** `store:set_secure` / `store:get_secure` map to the OS secure store (`keyring`).
 - **Frameless windowing:** Optional borderless window + `data-utah-drag` regions for native dragging; window controls are wired through `window.Utah.window.*`.
@@ -44,6 +45,22 @@ Exact numbers depend on your UI, dependencies, and target OS.
 ## Quick start
 
 **Prerequisites:** [Rust](https://rustup.rs/) (`rustup`) and [Node.js](https://nodejs.org/) (`npm`).
+
+### Assimilate an existing Electron + Vite project
+
+From the root of that repository (where `package.json` lives):
+
+```bash
+npx utah-framework --assimilate
+# or the short binary alias:
+npx utah --assimilate
+```
+
+This removes common Electron-era dependencies, adds `dev:utah` / `build:utah` scripts, drops `public/utah_electron_polyfill.js` (the Utah bridge + `require('electron')` shim), installs `scripts/wait-for-vite.mjs`, patches `index.html` when possible, and runs `cargo init` if there is no `Cargo.toml`. Use `npx utah-framework --assimilate --sync-core` to also copy this package’s `src/main.rs` and `Cargo.toml` (full Aegis worker) into the target tree.
+
+### Publish this package to npm (maintainers)
+
+From a clean tree with version bumped as needed: `npm login`, then `npm publish`. The `prepublishOnly` script checks that the CLI entry files exist. Consumers run `npx utah-framework --assimilate` (or `npx utah --assimilate`) without cloning this repo.
 
 ```bash
 git clone https://github.com/utahisnotastate/utah-framework.git
@@ -81,4 +98,4 @@ If you are new to Rust or native tooling, start with **[BEGINNER_DOCUMENTATION.m
 
 ## License
 
-See `package.json` / your chosen SPDX license for this repository.
+[MIT](./LICENSE) — see `package.json` `license` field.
