@@ -38,7 +38,7 @@ Exact numbers depend on your UI, dependencies, and target OS.
 **Prerequisites:** [Rust](https://rustup.rs/) (`rustup`) and [Node.js](https://nodejs.org/) (`npm`).
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/utahisnotastate/utah-framework.git
 cd utah-framework
 npm install
 ```
